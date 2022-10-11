@@ -25,7 +25,7 @@
     <arg name="use_sim_time" value="$(arg use_sim_time)" /> 
     
     <arg name="headless" value="$(arg headless)" />
-    <arg name="world_name" value="$(find greenhouse_rotation)/worlds/greenhouse1.world" />
+    <arg name="world_name" value="$(find greenhouse_rotation)/worlds/greenhouse_test1.world" />
   </include>
 
   <!-- Spawn Jackal -->

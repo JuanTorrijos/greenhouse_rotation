@@ -16,6 +16,7 @@ class AvoidObstacleClass():
         ############################### SUBSCRIBERS ##################################### 
         rospy.Subscriber("front/scan", LaserScan, self.laser_cb) 
         self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=1)
+        self.free_point_pub = rospy.Publisher("freepoint", PointStamped, queue_size=1)
         vel_msg = Twist()
         ############ CONSTANTS ################ 
         self.closest_range = 0.0 # Distance to the closest object
@@ -44,15 +45,15 @@ class AvoidObstacleClass():
             thetaAO = np.arctan2(np.sin(thetaAO), np.cos(thetaAO))
             #theta_closest = np.arctan2(np.sin(theta_closest),np.cos(theta_closest))
 
-            if np.isposinf(range): #If there are no obstacles
-                range = 8.0
+            # if np.isposinf(range): #If there are no obstacles
+            #     range = 8.0
 
             os.system('clear')
             if np.isposinf(range): #If there are no obstacles
                 print("No object detected")
                 vel_msg.linear.x = 0.4
                 vel_msg.angular.z = 0.0
-            elif range <= 2.0 and theta_closest : #if there is any obstacle in the range
+            elif range <= 2.0: #if there is any obstacle in the range
                 vel_msg.linear.x = kv * self.dt
                 vel_msg.angular.z = kw * self.thetaT
                 print("Object in the range")
@@ -62,20 +63,21 @@ class AvoidObstacleClass():
                 vel_msg.angular.z = 0
             else:
                 print("Else")
-                vel_msg.linear.x = 0.3
+                vel_msg.linear.x = 0.4
                 vel_msg.angular.z = 0.0
             
             #os.system('clear')
             print("closest object distance: " + str(self.closest_range))
             print("theta closest" + str(theta_closest))
             
-            point = self.coordinates(theta_closest, range)
+            # point = self.coordinates(theta_closest, range)
             transformedPoint = self.transform(self.xt, self.yt)
+            self.free_point_pub.publish(transformedPoint)
             xT_robot = transformedPoint.point.x
             yT_robot = transformedPoint.point.y
 
-            self.thetaT = np.arctan2(yT_robot, xT_robot)
-            self.dt = np.sqrt((xT_robot**2)+(yT_robot**2))
+            self.thetaT = np.arctan2(yT_robot, xT_robot) # angle to the free point
+            self.dt = np.sqrt((xT_robot**2)+(yT_robot**2))# Distance to the free point
             print("XT: ", xT_robot, "YT: ", yT_robot)
             print("ThetaT: ", self.thetaT, "Dt: ", self.dt)
             
@@ -97,12 +99,19 @@ class AvoidObstacleClass():
         # print("Closest object direction: " + str(self.closest_angle))
         distances = msg.ranges
         for i in range(len(distances)):
-            distance = distances[i]
+            if i > 89 or i < 630:           # Because we put the wall in the back 1/4 of the lectures
+                distance = distances[i]
+            else:
+                distance = 1.5                # This is like a back curved wall 
+
+            
             if np.isposinf(distance): #If there are no obstacles
                 distance = 8.0
             point = self.coordinates(msg.angle_min + i*msg.angle_increment, distance)
             self.xt += point[0]
             self.yt += point[1]
+            index = i
+        print("Indice maximo =", index)
         
     def transform(self, x_lidar, y_lidar):
         self.lidar_point.point.x = x_lidar
