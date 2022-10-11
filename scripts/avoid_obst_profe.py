@@ -2,10 +2,13 @@
 
 #Implementacion de avoid obstacles del profesor
 
+from matplotlib.transforms import Transform
 import rospy  
 import numpy as np 
 from sensor_msgs.msg import LaserScan   
 from geometry_msgs.msg import Twist 
+import tf
+from tf2_geometry_msgs import PointStamped
 
 # This class implements a simple obstacle avoidance algorithm 
 class AvoidObstacleClass():  
@@ -22,6 +25,17 @@ class AvoidObstacleClass():
         self.closest_angle = 0.0 #Angle to the closest object 
         self.closest_range = np.inf #Distance to the closest object 
         vel_msg = Twist() 
+
+        # Tf Transform variables
+        self.listener = tf.TransformListener()
+        self.listener.waitForTransform("front_laser", "base_link", rospy.Time(0),rospy.Duration(4.0))
+        self.lidar_point=PointStamped()
+        self.lidar_point.header.frame_id = "front_laser"
+        self.lidar_point.header.stamp =rospy.Time(0)
+        # laser_point.point.x=0.0
+        # laser_point.point.y=0.0
+        # laser_point.point.z=0.0
+
         rate = rospy.Rate(10) #10Hz is the lidar's frequency  
         print("Node initialized 1hz") 
 
@@ -47,15 +61,30 @@ class AvoidObstacleClass():
                         angles_array.append(angle) 
                     xT=sum(x_array) 
                     yT=sum(y_array) 
-                    thetaT=np.arctan2(yT,xT) 
-                    dT=np.sqrt(xT**2+yT**2) 
 
-                    vel_msg.linear.x, vel_msg.angular.z = self.control_speed(dT, thetaT)  
+                    transformedPoint = self.transform(xT,yT)
+                    xT_robot = transformedPoint.point.x
+                    yT_robot = transformedPoint.point.y
+                    
+                    thetaT=np.arctan2(yT_robot,xT_robot) 
+                    dT=np.sqrt(xT_robot**2+yT_robot**2) 
+
+                    print("xT lidar = ", xT)
+                    print("yT lidar = ", yT)
+                    print("xT robot = ", xT_robot)
+                    print("yT robot = ", yT_robot)
+
+                    # vel_msg.linear.x, vel_msg.angular.z = self.control_speed(dT, thetaT)  
                     print("Avoiding obstacle")                    
 
             self.cmd_vel_pub.publish(vel_msg) 
             rate.sleep()  
           
+    def transform(self, x_lidar, y_lidar):
+        self.lidar_point.point.x = x_lidar
+        self.lidar_point.point.y = y_lidar
+        p_jackal = self.listener.transformPoint("base_link", self.lidar_point)
+        return p_jackal
 
     def laser_cb(self, msg):  
         ## This function receives a message of type LaserScan and computes the closest object direction and range 
@@ -73,7 +102,6 @@ class AvoidObstacleClass():
         w = kw * theta #angular speed 
         return v, w 
 
- 
 
     def get_angle(self, idx, angle_min, angle_increment): 
         ## This function returns the angle for a given element of the object in the lidar's frame 

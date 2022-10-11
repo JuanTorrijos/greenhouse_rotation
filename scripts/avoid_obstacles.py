@@ -7,6 +7,8 @@ import math
 from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import Twist
 import os
+import tf
+from tf2_geometry_msgs import PointStamped
 #This class will receive a laserScan and finds the closest object
 class AvoidObstacleClass(): 
     def __init__(self): 
@@ -24,6 +26,13 @@ class AvoidObstacleClass():
         self.dt = 0
         self.xt = 0
         self.yt = 0
+
+        # Tf Transform variables
+        self.listener = tf.TransformListener()
+        self.listener.waitForTransform("front_laser", "base_link", rospy.Time(0),rospy.Duration(4.0))
+        self.lidar_point=PointStamped()
+        self.lidar_point.header.frame_id = "front_laser"
+        self.lidar_point.header.stamp =rospy.Time(0)
 
         #********** INIT NODE **********### 
         r = rospy.Rate(10) #10Hz is the lidar's frequency
@@ -61,9 +70,13 @@ class AvoidObstacleClass():
             print("theta closest" + str(theta_closest))
             
             point = self.coordinates(theta_closest, range)
-            self.thetaT = np.arctan2(self.yt, self.xt)
-            self.dt = np.sqrt((self.xt**2)+(self.yt**2))
-            print("XT: ", self.xt, "YT: ", self.yt)
+            transformedPoint = self.transform(self.xt, self.yt)
+            xT_robot = transformedPoint.point.x
+            yT_robot = transformedPoint.point.y
+
+            self.thetaT = np.arctan2(yT_robot, xT_robot)
+            self.dt = np.sqrt((xT_robot**2)+(yT_robot**2))
+            print("XT: ", xT_robot, "YT: ", yT_robot)
             print("ThetaT: ", self.thetaT, "Dt: ", self.dt)
             
 
@@ -91,7 +104,11 @@ class AvoidObstacleClass():
             self.xt += point[0]
             self.yt += point[1]
         
-        
+    def transform(self, x_lidar, y_lidar):
+        self.lidar_point.point.x = x_lidar
+        self.lidar_point.point.y = y_lidar
+        p_jackal = self.listener.transformPoint("base_link", self.lidar_point)
+        return p_jackal   
         
     def cleanup(self): 
         #This function is called just before finishing the node 
