@@ -62,12 +62,12 @@ class AvoidObstacleClass():
                 vel_msg.linear.x = 0
                 vel_msg.angular.z = 0
             else:
-                print("Else")
+                print("No objects close")
                 vel_msg.linear.x = 0.4
                 vel_msg.angular.z = 0.0
             
             #os.system('clear')
-            print("closest object distance: " + str(self.closest_range))
+            print("closest object distance: " + str(range))
             print("theta closest" + str(theta_closest))
             
             # point = self.coordinates(theta_closest, range)
@@ -99,10 +99,10 @@ class AvoidObstacleClass():
         # print("Closest object direction: " + str(self.closest_angle))
         distances = msg.ranges
         for i in range(len(distances)):
-            if i > 89 or i < 630:           # Because we put the wall in the back 1/4 of the lectures
-                distance = distances[i]
+            if i > 270 and i < 450:           # Because we put the wall in the back 1/4 of the lectures
+                distance = 1.0
             else:
-                distance = 1.5                # This is like a back curved wall 
+                distance = distances[i]             # This is like a back curved wall 
 
             
             if np.isposinf(distance): #If there are no obstacles
@@ -110,8 +110,7 @@ class AvoidObstacleClass():
             point = self.coordinates(msg.angle_min + i*msg.angle_increment, distance)
             self.xt += point[0]
             self.yt += point[1]
-            index = i
-        print("Indice maximo =", index)
+        # print("Indice maximo =", len(msg.ranges))
         
     def transform(self, x_lidar, y_lidar):
         self.lidar_point.point.x = x_lidar
