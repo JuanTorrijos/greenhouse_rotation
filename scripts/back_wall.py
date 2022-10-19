@@ -21,8 +21,8 @@ class AvoidObstacleClass():
         ############ CONSTANTS ################ 
         self.closest_range = 0.0 # Distance to the closest object
         self.closest_angle = 0.0 # Angle to the closest object
-        kw = 0.5                #Angular velocity gain
-        kv = 0.0008             #desired linear speed
+        kw = 1.0 #Angular velocity gain
+        kv = 0.0004 #desired linear speed
         self.thetaT = 0
         self.dt = 0
         self.xt = 0
@@ -100,10 +100,12 @@ class AvoidObstacleClass():
         distances = msg.ranges
         for i in range(len(distances)):
             if i > 270 and i < 450:           # Because we put the wall in the back 1/4 of the lectures
-                distance = .50
+                distance = 1.0
             else:
                 distance = distances[i]             # This is like a back curved wall 
 
+            # if i < 270 or i > 450:
+            #     distance = distances[i]
             
             if np.isposinf(distance): #If there are no obstacles
                 distance = 8.0

@@ -18,6 +18,9 @@
     <arg name="joystick" value="$(arg joystick)" />
   </include>
 
+  <!-- Aquí agrega el filtro del lidar -->
+  <include file="$(find greenhouse_rotation)/launch/lidar_filter.launch" />
+
   <!-- Spawn Jackal -->
   <node name="urdf_spawner" pkg="gazebo_ros" type="spawn_model"
 	      args="-urdf -model jackal -param robot_description -x $(arg x) -y $(arg y) -z $(arg z) -R 0 -P 0 -Y $(arg yaw)" />
