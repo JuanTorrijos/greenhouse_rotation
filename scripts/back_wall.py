@@ -11,18 +11,18 @@ import tf
 from tf2_geometry_msgs import PointStamped
 #This class will receive a laserScan and finds the closest object
 class AvoidObstacleClass(): 
-    def __init__(self): 
+    def _init_(self): 
         rospy.on_shutdown(self.cleanup)  
         ############################### SUBSCRIBERS ##################################### 
         rospy.Subscriber("front/scan", LaserScan, self.laser_cb) 
         self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=1)
-        self.free_point_pub = rospy.Publisher("freepoint", PointStamped, queue_size=10)
+        self.free_point_pub = rospy.Publisher("freepoint", PointStamped, queue_size=1)
         vel_msg = Twist()
         ############ CONSTANTS ################ 
-        self.closest_range = 0.0 # Distance to the closest object
-        self.closest_angle = 0.0 # Angle to the closest object
-        kw = 1.0 #Angular velocity gain
-        kv = 0.0004 #desired linear speed
+        self.closest_range = 0.0    # Distance to the closest object
+        self.closest_angle = 0.0    # Angle to the closest object
+        kw = 0.01                    # Angular velocity gain
+        kv = 0.0004                 # Desired linear speed
         self.thetaT = 0
         self.dt = 0
         self.xt = 0
@@ -35,7 +35,7 @@ class AvoidObstacleClass():
         self.lidar_point.header.frame_id = "front_laser"
         self.lidar_point.header.stamp =rospy.Time(0)
 
-        #********** INIT NODE **********### 
+        #**** INIT NODE ****### 
         r = rospy.Rate(10) #10Hz is the lidar's frequency
         print("Node initialized 10hz")
         while not rospy.is_shutdown(): 
@@ -77,7 +77,7 @@ class AvoidObstacleClass():
             yT_robot = transformedPoint.point.y
 
             self.thetaT = np.arctan2(yT_robot, xT_robot) # angle to the free point
-            self.dt = np.sqrt((xT_robot**2)+(yT_robot**2))# Distance to the free point
+            self.dt = np.sqrt((xT_robot*2)+(yT_robot*2))# Distance to the free point
             print("XT: ", xT_robot, "YT: ", yT_robot)
             print("ThetaT: ", self.thetaT, "Dt: ", self.dt)
             
@@ -99,16 +99,17 @@ class AvoidObstacleClass():
         # print("Closest object direction: " + str(self.closest_angle))
         distances = msg.ranges
         for i in range(len(distances)):
-            if i > 270 and i < 450:           # Because we put the wall in the back 1/4 of the lectures
-                distance = 1.0
-            else:
-                distance = distances[i]             # This is like a back curved wall 
+            # if i > 270 and i < 450:           # Because we put the wall in the back 1/4 of the lectures
+            #     distance = 1.0
+            # else:
+            #     distance = distances[i]             # This is like a back curved wall 
+            distance = distances[i]
 
             # if i < 270 or i > 450:
             #     distance = distances[i]
             
             if np.isposinf(distance): #If there are no obstacles
-                distance = 8.0
+            distance = 8.0
             point = self.coordinates(msg.angle_min + i*msg.angle_increment, distance)
             self.xt += point[0]
             self.yt += point[1]
@@ -137,6 +138,7 @@ class AvoidObstacleClass():
         return point
 
 ############################### MAIN PROGRAM #################################### 
-if __name__ == "__main__": 
+
+if _name_ == "_main_": 
     rospy.init_node("avoid_obstacle", anonymous=True) 
     AvoidObstacleClass()
