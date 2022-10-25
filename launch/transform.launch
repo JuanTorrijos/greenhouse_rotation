@@ -1,0 +1,7 @@
+<launch> 
+
+<node pkg="tf2_ros" type="static_transform_publisher" name="link_transform1" args="0  0  0  0  0  0  front_laser reference"/> 
+<node pkg="tf2_ros" type="static_transform_publisher" name="link_transform2" args="0  0  0  3.14  0  0  reference base_link"/> 
+<node pkg="tf2_ros" type="static_transform_publisher" name="link_transform3" args="0.18  0  0  3.14  0  0  reference front_laser"/> 
+
+</launch> 

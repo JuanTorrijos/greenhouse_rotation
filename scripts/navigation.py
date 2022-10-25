@@ -23,6 +23,12 @@ class navigation_nodeClass():
         self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=1)
         ### Constants
         ### Variables
+        # Tf Transform variables
+        self.listener = tf.TransformListener()
+        self.listener.waitForTransform("front_laser", "base_link", rospy.Time(0),rospy.Duration(4.0))
+        self.lidar_point=PointStamped()
+        self.lidar_point.header.frame_id = "front_laser"
+        self.lidar_point.header.stamp =rospy.Time(0)
         vel_msg = Twist()
         r = rospy.Rate(10)
         print('initialized node')
@@ -43,6 +49,11 @@ class navigation_nodeClass():
         angle = np.arctan(y/x)
         ranges = np.sqrt(x2+y2)
         return angle,ranges
+    def transform(self, x_lidar, y_lidar):
+        self.lidar_point.point.x = x_lidar
+        self.lidar_point.point.y = y_lidar
+        p_jackal = self.listener.transformPoint("base_link", self.lidar_point)
+        return p_jackal  
     def laser_sensor(self,data):
         os.system('clear')
         print('data recieved')
@@ -56,7 +67,11 @@ class navigation_nodeClass():
         free_point_y = np.sum(y)
         print('X= ',free_point_x)
         print('Y= ',free_point_y)
-        theta,radio = self.cartesian2polar(free_point_x,free_point_y)
+        transformed_point = self.transform(free_point_x,free_point_y)
+        print('New coordinates: ')
+        print('X= ',transformed_point.point.x)
+        print('Y= ',transformed_point.point.y)
+        theta,radio = self.cartesian2polar(transformed_point.point.x,transformed_point.point.y)
         print('Angle: ',theta*180/np.pi)
         print('Radio: ',radio)
         return
