@@ -4,5 +4,7 @@ scan_filter_chain:
   params:
     # lower_angle: -0.7853981634
     # upper_angle: 0.7853981634
-    lower_angle: -0.8       # -45 DEG
-    upper_angle: 0.8        # 45 DEG
+    #lower_angle: -0.8       # -45 DEG
+    #upper_angle: 0.8        # 45 DEG
+    lower_angle: -1.57       # -45 DEG
+    upper_angle: 1.57        # 45 DEG
