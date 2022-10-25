@@ -11,7 +11,7 @@ import tf
 from tf2_geometry_msgs import PointStamped
 #This class will receive a laserScan and finds the closest object
 class AvoidObstacleClass(): 
-    def _init_(self): 
+    def __init__(self): 
         rospy.on_shutdown(self.cleanup)  
         ############################### SUBSCRIBERS ##################################### 
         rospy.Subscriber("front/scan", LaserScan, self.laser_cb) 
@@ -21,8 +21,8 @@ class AvoidObstacleClass():
         ############ CONSTANTS ################ 
         self.closest_range = 0.0    # Distance to the closest object
         self.closest_angle = 0.0    # Angle to the closest object
-        kw = 0.01                    # Angular velocity gain
-        kv = 0.0004                 # Desired linear speed
+        kw = 1.0                    # Angular velocity gain
+        kv = 0.004                 # Desired linear speed
         self.thetaT = 0
         self.dt = 0
         self.xt = 0
@@ -53,17 +53,17 @@ class AvoidObstacleClass():
                 print("No object detected")
                 vel_msg.linear.x = 0.4
                 vel_msg.angular.z = 0.0
-            elif range <= 2.0: #if there is any obstacle in the range
+            elif range <= 0.5: #if there is any obstacle in the range
+                vel_msg.linear.x = 0.0
+                vel_msg.angular.z = 0.0
+                print("Object too close")
+            elif range <= 1.0: #if there is any obstacle in the range
                 vel_msg.linear.x = kv * self.dt
                 vel_msg.angular.z = kw * self.thetaT
                 print("Object in the range")
-            elif range <= 1.0: #if there is any obstacle in the range
-                print("Object too close")
-                vel_msg.linear.x = 0
-                vel_msg.angular.z = 0
             else:
                 print("No objects close")
-                vel_msg.linear.x = 0.4
+                vel_msg.linear.x = 0.2
                 vel_msg.angular.z = 0.0
             
             #os.system('clear')
@@ -99,20 +99,26 @@ class AvoidObstacleClass():
         # print("Closest object direction: " + str(self.closest_angle))
         distances = msg.ranges
         for i in range(len(distances)):
-            # if i > 270 and i < 450:           # Because we put the wall in the back 1/4 of the lectures
-            #     distance = 1.0
-            # else:
-            #     distance = distances[i]             # This is like a back curved wall 
-            distance = distances[i]
+            if i > 270 and i < 450:           # Because we put the wall in the back 1/4 of the lectures
+                distance = 1.0
+            else:
+                distance = distances[i]             # This is like a back curved wall 
+            # distance = distances[i]
 
             # if i < 270 or i > 450:
             #     distance = distances[i]
             
             if np.isposinf(distance): #If there are no obstacles
                 distance = 8.0
+<<<<<<< HEAD
                 point = self.coordinates(msg.angle_min + i*msg.angle_increment, distance)
                 self.xt += point[0]
                 self.yt += point[1]
+=======
+            point = self.coordinates(msg.angle_min + i*msg.angle_increment, distance)
+            self.xt += point[0]
+            self.yt += point[1]
+>>>>>>> acf92a35cdddd652a2443314143163eb2f639667
         # print("Indice maximo =", len(msg.ranges))
         
     def transform(self, x_lidar, y_lidar):

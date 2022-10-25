@@ -58,7 +58,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
       <turnGravityOff>true</turnGravityOff>
       <sensor type="ray" name="${frame}">
         <pose>0 0 0 0 0 0</pose>
-        <visualize>false</visualize>
+        <!-- aquí cambie el false por true para que se vean los rayos del lidar -->
+        <visualize>true</visualize>
         <update_rate>${update_rate}</update_rate>
         <ray>
           <scan>
