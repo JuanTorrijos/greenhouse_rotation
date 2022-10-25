@@ -24,6 +24,12 @@ class navigation_nodeClass():
         ### Constants
         ### Variables
         vel_msg = Twist()
+        self.listener = tf.TransformListener()
+        self.listener.waitForTransform("front_laser", "base_link", rospy.Time(0),rospy.Duration(4.0))
+        self.lidar_point=PointStamped()
+        self.lidar_point.header.frame_id = "front_laser"
+        self.lidar_point.header.stamp =rospy.Time(0)
+
         r = rospy.Rate(10)
         print('initialized node')
         while not rospy.is_shutdown():
@@ -60,6 +66,13 @@ class navigation_nodeClass():
         print('Angle: ',theta*180/np.pi)
         print('Radio: ',radio)
         return
+
+    def transform(self, x_lidar, y_lidar):
+        self.lidar_point.point.x = x_lidar
+        self.lidar_point.point.y = y_lidar
+        p_jackal = self.listener.transformPoint("base_link", self.lidar_point)
+        return p_jackal
+        
     def cleanup(self):
         return
 

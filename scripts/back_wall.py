@@ -110,15 +110,9 @@ class AvoidObstacleClass():
             
             if np.isposinf(distance): #If there are no obstacles
                 distance = 8.0
-<<<<<<< HEAD
                 point = self.coordinates(msg.angle_min + i*msg.angle_increment, distance)
                 self.xt += point[0]
                 self.yt += point[1]
-=======
-            point = self.coordinates(msg.angle_min + i*msg.angle_increment, distance)
-            self.xt += point[0]
-            self.yt += point[1]
->>>>>>> acf92a35cdddd652a2443314143163eb2f639667
         # print("Indice maximo =", len(msg.ranges))
         
     def transform(self, x_lidar, y_lidar):
