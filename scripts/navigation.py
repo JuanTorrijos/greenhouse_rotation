@@ -22,8 +22,12 @@ class navigation_nodeClass():
         self.free_point_pub = rospy.Publisher("freepoint", PointStamped, queue_size=1)
         self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=1)
         ### Constants
-        self.PV = 5e-4      # Linear velocity gain
-        self.PW = 1         # Angular velocity gain
+        self.PV = 5e-4              # Linear velocity gain
+        self.PW = 5                 # Angular velocity gain
+        angle = 60
+        self.weighted_limit = (angle+90)*np.pi/180    # Limit to apply the weighted range
+        self.left_value = 25
+        self.right_value = 30
         ### Variables
         # Tf Transform variables
         self.listener = tf.TransformListener()
@@ -37,9 +41,17 @@ class navigation_nodeClass():
         while not rospy.is_shutdown():
             r.sleep()
     def polar2cartesian(self,angles,ranges):
-        ranges = np.nan_to_num(ranges,posinf=25)
-        ranges[ranges == 26] = 0
-        #print(ranges)
+        print('Initial len angles: ',len(angles))
+        print('Initial len ranges: ',len(ranges))
+        angles = np.delete(angles,np.where(ranges == 26))
+        ranges = np.delete(ranges,np.where(ranges == 26))
+        print('Final len angles: ',len(angles))
+        print('Final len ranges: ',len(ranges))
+        print('Limite: ',self.weighted_limit,' angle: ',self.weighted_limit*180/np.pi)
+        ranges[(angles<self.weighted_limit) & (angles>0)] = np.nan_to_num(ranges[(angles<self.weighted_limit) & (angles>0)],posinf=self.right_value)
+        ranges = np.nan_to_num(ranges,posinf=self.left_value)
+        #for i in range(len(angles)):
+         #   print('Range: ',round(ranges[i],2),'Angle: ',round(angles[i]*180/np.pi,2))
         x = np.cos(angles)
         y = np.sin(angles)
         x = np.multiply(x,ranges)
@@ -61,8 +73,8 @@ class navigation_nodeClass():
         self.vel_msg.linear.x = lin_vel
         ang_vel = theta * self.PW
         self.vel_msg.angular.z = ang_vel
-        print('Linear vel= ',lin_vel)
-        print('Angular vel= ',ang_vel)
+        print('Linear vel= ',round(lin_vel,2))
+        print('Angular vel= ',round(ang_vel,2))
         self.cmd_vel_pub.publish(self.vel_msg)
         return 
     def laser_sensor(self,data):
@@ -76,19 +88,24 @@ class navigation_nodeClass():
         x,y = self.polar2cartesian(list_angles,list_ranges)
         free_point_x = np.sum(x)
         free_point_y = np.sum(y)
-        print('X= ',free_point_x)
-        print('Y= ',free_point_y)
+        print('X= ',round(free_point_x,2))
+        print('Y= ',round(free_point_y,2))
         transformed_point = self.transform(free_point_x,free_point_y)
         print('New coordinates: ')
-        print('X= ',transformed_point.point.x)
-        print('Y= ',transformed_point.point.y)
+        print('X= ',round(transformed_point.point.x,2))
+        print('Y= ',round(transformed_point.point.y,2))
         theta,radio = self.cartesian2polar(transformed_point.point.x,transformed_point.point.y)
-        print('Angle: ',theta*180/np.pi)
-        print('Radio: ',radio)
+        print('Angle: ',round(theta*180/np.pi,2))
+        print('Radio: ',round(radio,2))
         self.navigation(theta,radio)
-        return
-        
+        return 
     def cleanup(self):
+        self.vel_msg.linear.x = 0
+        self.vel_msg.angular.z = 0
+        self.cmd_vel_pub.publish(self.vel_msg)
+        print('###')
+        print('Node killed successfully')
+        print('###')
         return
 
 ### Main program
