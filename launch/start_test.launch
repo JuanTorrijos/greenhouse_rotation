@@ -37,4 +37,5 @@
     <arg name="config" value="$(arg config)" />
     <arg name="joystick" value="$(arg joystick)" />
   </include>
+  <include file="$(find greenhouse_rotation)/launch/simulation.launch" />
 </launch>

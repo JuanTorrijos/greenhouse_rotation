@@ -1,0 +1,9 @@
+<launch> 
+
+
+
+<node type="rviz" name="rviz" pkg="rviz" args="-d $(find greenhouse_rotation)/config/rviz_config.rviz"/>
+
+
+
+</launch> 
