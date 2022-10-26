@@ -81,12 +81,6 @@ class navigation_nodeClass():
         print('Angle: ',theta*180/np.pi)
         print('Radio: ',radio)
         return
-
-    def transform(self, x_lidar, y_lidar):
-        self.lidar_point.point.x = x_lidar
-        self.lidar_point.point.y = y_lidar
-        p_jackal = self.listener.transformPoint("base_link", self.lidar_point)
-        return p_jackal
         
     def cleanup(self):
         return
