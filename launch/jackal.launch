@@ -1,0 +1,5 @@
+<launch>
+<include file="$(find greenhouse_rotation)/launch/transform.launch" />
+<include file="$(find greenhouse_rotation)/launch/lidar_filter.launch" />
+<node pkg="greenhouse_rotation" type="navigation.py" name="navigation"/>
+</launch>

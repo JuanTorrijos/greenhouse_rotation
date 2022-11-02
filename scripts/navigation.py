@@ -15,6 +15,7 @@ from tf2_geometry_msgs import PointStamped
 
 class navigation_nodeClass():
     def __init__(self):
+        print('Node init')
         rospy.on_shutdown(self.cleanup) 
         ### Suscriber
         rospy.Subscriber("/scan_filtered", LaserScan, self.laser_sensor) 
@@ -23,15 +24,16 @@ class navigation_nodeClass():
         self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=1)
         ### Constants
         self.PV = 5e-4              # Linear velocity gain
-        self.PW = 5                 # Angular velocity gain
+        self.PW = 1                 # Angular velocity gain
         angle = 60
         self.weighted_limit = (angle+90)*np.pi/180    # Limit to apply the weighted range
-        self.left_value = 25
-        self.right_value = 30
+        self.left_value = 15
+        self.right_value = 15
+        self.weight = 1
         ### Variables
         # Tf Transform variables
         self.listener = tf.TransformListener()
-        self.listener.waitForTransform("front_laser", "base_link", rospy.Time(0),rospy.Duration(4.0))
+        self.listener.waitForTransform("front_laser", "base_link2", rospy.Time(0),rospy.Duration(4.0))
         self.lidar_point=PointStamped()
         self.lidar_point.header.frame_id = "front_laser"
         self.lidar_point.header.stamp =rospy.Time(0)
@@ -41,17 +43,14 @@ class navigation_nodeClass():
         while not rospy.is_shutdown():
             r.sleep()
     def polar2cartesian(self,angles,ranges):
-        print('Initial len angles: ',len(angles))
-        print('Initial len ranges: ',len(ranges))
         angles = np.delete(angles,np.where(ranges == 26))
         ranges = np.delete(ranges,np.where(ranges == 26))
-        print('Final len angles: ',len(angles))
-        print('Final len ranges: ',len(ranges))
-        print('Limite: ',self.weighted_limit,' angle: ',self.weighted_limit*180/np.pi)
-        ranges[(angles<self.weighted_limit) & (angles>0)] = np.nan_to_num(ranges[(angles<self.weighted_limit) & (angles>0)],posinf=self.right_value)
-        ranges = np.nan_to_num(ranges,posinf=self.left_value)
-        #for i in range(len(angles)):
-         #   print('Range: ',round(ranges[i],2),'Angle: ',round(angles[i]*180/np.pi,2))
+        #ranges[(angles<self.weighted_limit) & (angles>0)] = np.nan_to_num(ranges[(angles<self.weighted_limit) & (angles>0)],posinf=self.right_value)
+        #ranges = np.nan_to_num(ranges,posinf=self.left_value)
+
+        ranges = np.nan_to_num(ranges,posinf=25)
+        ranges[(angles<self.weighted_limit) & (angles>0)] *= self.weight
+    
         x = np.cos(angles)
         y = np.sin(angles)
         x = np.multiply(x,ranges)
@@ -69,7 +68,8 @@ class navigation_nodeClass():
         p_jackal = self.listener.transformPoint("base_link", self.lidar_point)
         return p_jackal 
     def navigation(self,theta,rho):
-        lin_vel = rho * self.PV
+        #lin_vel = rho * self.PV
+        lin_vel = 0.2
         self.vel_msg.linear.x = lin_vel
         ang_vel = theta * self.PW
         self.vel_msg.angular.z = ang_vel
