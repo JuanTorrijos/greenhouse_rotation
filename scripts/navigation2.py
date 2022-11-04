@@ -21,6 +21,7 @@ class navigation_nodeClass():
         ### Publishers
         self.free_point_pub = rospy.Publisher("freepoint", PointStamped, queue_size=1)
         self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=1)
+        self.filtered_ranges_pub = rospy.Publisher("filtered_ranges", LaserScan, queue_size=1)
         ### Constants
         self.PV = 5e-4              # Linear velocity gain
         self.PW = 5                 # Angular velocity gain
@@ -39,6 +40,7 @@ class navigation_nodeClass():
         self.lidar_point.header.frame_id = "front_laser"
         self.lidar_point.header.stamp =rospy.Time(0)
         self.vel_msg = Twist()
+        self.filt_ranges = LaserScan()
         r = rospy.Rate(10)
         print('initialized node')
         while not rospy.is_shutdown():
@@ -57,6 +59,8 @@ class navigation_nodeClass():
             print('Angle: ',round(theta*180/np.pi,2))
             print('Radio: ',round(radio,2))
             self.navigation(theta,radio)
+            self.filt_ranges.ranges = self.median_filter(list_ranges)
+            self.filtered_ranges_pub.publish(self.filt_ranges)
 
             r.sleep()
     def polar2cartesian(self,angles,ranges):
@@ -94,8 +98,15 @@ class navigation_nodeClass():
         self.vel_msg.angular.z = ang_vel
         print('Linear vel= ',round(lin_vel,2))
         print('Angular vel= ',round(ang_vel,2))
-        self.cmd_vel_pub.publish(self.vel_msg)
+        # self.cmd_vel_pub.publish(self.vel_msg)
         return 
+    def median_filter(self, ranges):
+        for i in range(len(ranges)):
+            if i == 0 or i == len(ranges)-1:
+                pass
+            else:
+                ranges[i] = np.mean(ranges[i-1:i+1])
+        return ranges
     def laser_sensor(self,data):
         os.system('clear')
         print('data recieved')
@@ -104,6 +115,7 @@ class navigation_nodeClass():
         iterations = len(data.ranges)
         self.list_angles = np.linspace(start,end,iterations)
         self.list_ranges = np.array(data.ranges,dtype=np.float64)
+        self.filt_ranges = data
         return 
     def cleanup(self):
         self.vel_msg.linear.x = 0
