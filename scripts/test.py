@@ -23,13 +23,13 @@ class navigation_nodeClass():
         self.cmd_vel_pub = rospy.Publisher("cmd_vel", Twist, queue_size=1)
         self.filtered_ranges_pub = rospy.Publisher("filtered_ranges", LaserScan, queue_size=1)
         ### Constants
-        self.PV = 5e-4              # Linear velocity gain
-        self.PW = 5                 # Angular velocity gain
+        self.PW = 2                 # Angular velocity gain
         angle = 60
         self.weighted_limit = (angle+90)*np.pi/180    # Limit to apply the weighted range
-        self.left_value = 25
-        self.right_value = 30
-        self.lin_vel = 0.2
+        self.infvalue = 25
+        self.weight = 1.5
+        self.lin_vel = 0.3
+        self.lane_width = 4
         ### Variables
         self.list_angles = np.array
         self.list_ranges = np.array
@@ -47,10 +47,10 @@ class navigation_nodeClass():
         r = rospy.Rate(10)
         print('initialized node')
         while not rospy.is_shutdown():
-            os.system('clear') 
             list_angles = self.list_angles
             list_ranges = self.list_ranges
             self.new_data = self.bus
+            os.system('clear') 
             x,y = self.polar2cartesian(list_angles,list_ranges)
             free_point_x = np.sum(x)
             free_point_y = np.sum(y)
@@ -64,23 +64,15 @@ class navigation_nodeClass():
             print('Angle: ',round(theta*180/np.pi,2))
             print('Radio: ',round(radio,2))
             self.navigation(theta,radio)
-            self.filt_ranges.ranges = self.median_filter(list_ranges)
-            self.filtered_ranges_pub.publish(self.filt_ranges)
             r.sleep()
     def noise_filter(self,list,index):
         l = int(len(list))
-        #print(list)
-
-        #print('#########################')
         mat = np.matrix([index,list])
         angles = np.array(mat[0,:])
         angles = angles[0]
         ranges = np.array(mat[1,:])
         ranges=ranges[0]
-        
         newlist = np.zeros_like(list)
-        #print(ranges)
-        #print(type(mat))
         for i in range(l):
             element = ranges[i]
             if (np.isposinf(element)).any:
@@ -95,22 +87,19 @@ class navigation_nodeClass():
             else:
                 newelement = element
             newlist[i] = newelement
-            #print('Old: ',round(element,4),'New: ',round(newelement,4), 'Dif: ',round(element-newelement,4),'Angle',angles[i])
         return newlist, angles
     def polar2cartesian(self,angles,ranges):
-        #print('Initial len angles: ',len(angles))
-        #print('Initial len ranges: ',len(ranges))
         angles = np.delete(angles,np.where(ranges == 26))
         ranges = np.delete(ranges,np.where(ranges == 26))
         ranges, angles = self.noise_filter(ranges,angles)
+        print('Limite: ',self.weighted_limit,' angle: ',self.weighted_limit*180/np.pi)
+        ranges = np.nan_to_num(ranges,posinf=self.infvalue)
+        ranges[(angles<self.weighted_limit) & (angles>0) & (ranges>self.lane_width)] *= self.weight
         self.new_data.ranges,new_angles = self.noise_filter(ranges,angles)
         self.new_data.angle_min=min(new_angles)
         self.new_data.angle_max=max(new_angles)
         self.new_data.angle_increment=new_angles[1]-new_angles[0]
         self.filtered_ranges_pub.publish(self.new_data)
-        print('Limite: ',self.weighted_limit,' angle: ',self.weighted_limit*180/np.pi)
-        ranges[(angles<self.weighted_limit) & (angles>0)] = np.nan_to_num(ranges[(angles<self.weighted_limit) & (angles>0)],posinf=self.right_value)
-        ranges = np.nan_to_num(ranges,posinf=self.left_value)
         #for i in range(len(angles)):
          #   print('Range: ',round(ranges[i],2),'Angle: ',round(angles[i]*180/np.pi,2))
         x = np.cos(angles)
@@ -130,7 +119,6 @@ class navigation_nodeClass():
         p_jackal = self.listener.transformPoint("base_link", self.lidar_point)
         return p_jackal 
     def navigation(self,theta,rho):
-        #lin_vel = rho * self.PV
         self.vel_msg.linear.x = self.lin_vel
         ang_vel = theta * self.PW
         self.vel_msg.angular.z = ang_vel
@@ -138,13 +126,6 @@ class navigation_nodeClass():
         print('Angular vel= ',round(ang_vel,2))
         self.cmd_vel_pub.publish(self.vel_msg)
         return 
-    def median_filter(self, ranges):
-        for i in range(len(ranges)):
-            if i == 0 or i == len(ranges)-1:
-                pass
-            else:
-                ranges[i] = np.mean(ranges[i-1:i+1])
-        return ranges
     def laser_sensor(self,data):
         #print('data recieved')
         self.bus = data
