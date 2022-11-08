@@ -27,8 +27,9 @@ class navigation_nodeClass():
         self.PW = 5                 # Angular velocity gain
         angle = 60
         self.weighted_limit = (angle+90)*np.pi/180    # Limit to apply the weighted range
-        self.left_value = 25
-        self.right_value = 30
+        self.left_value = 25.0
+        self.right_value = 30.0
+        self.weight = 1.0
         ### Variables
         self.list_angles = np.array
         self.list_ranges = np.array
@@ -60,19 +61,23 @@ class navigation_nodeClass():
             print('Angle: ',round(theta*180/np.pi,2))
             print('Radio: ',round(radio,2))
             self.navigation(theta,radio)
-            self.filt_ranges.ranges = self.median_filter(list_ranges)
-            self.filtered_ranges_pub.publish(self.filt_ranges)
+            # self.filt_ranges.ranges = self.median_filter(list_ranges)
+            # self.filtered_ranges_pub.publish(self.filt_ranges)
             r.sleep()
     def polar2cartesian(self,angles,ranges):
-        print('Initial len angles: ',len(angles))
-        print('Initial len ranges: ',len(ranges))
+        #print('Initial len angles: ',len(angles))
+        #print('Initial len ranges: ',len(ranges))
         angles = np.delete(angles,np.where(ranges == 26))
         ranges = np.delete(ranges,np.where(ranges == 26))
-        print('Final len angles: ',len(angles))
-        print('Final len ranges: ',len(ranges))
-        print('Limite: ',self.weighted_limit,' angle: ',self.weighted_limit*180/np.pi)
-        ranges[(angles<self.weighted_limit) & (angles>0)] = np.nan_to_num(ranges[(angles<self.weighted_limit) & (angles>0)],posinf=self.right_value)
-        ranges = np.nan_to_num(ranges,posinf=self.left_value)
+        # print('Final len angles: ',len(angles))
+        # print('Final len ranges: ',len(ranges))
+        # print('Limite: ',self.weighted_limit,' angle: ',self.weighted_limit*180/np.pi)
+        # ranges[(angles<self.weighted_limit) & (angles>0)] = np.nan_to_num(ranges[(angles<self.weighted_limit) & (angles>0)],posinf=self.right_value)
+        # ranges = np.nan_to_num(ranges,posinf=self.left_value)
+        ranges = np.nan_to_num(ranges,posinf=25)
+        ranges[(angles<self.weighted_limit) & (angles>0)] *= self.weight
+        self.filt_ranges.ranges = self.median_filter(ranges)
+        self.filtered_ranges_pub.publish(self.filt_ranges)
         #for i in range(len(angles)):
          #   print('Range: ',round(ranges[i],2),'Angle: ',round(angles[i]*180/np.pi,2))
         x = np.cos(angles)
@@ -103,7 +108,7 @@ class navigation_nodeClass():
     def median_filter(self, ranges):
         for i in range(len(ranges)):
             if i == 0 or i == len(ranges)-1:
-                pass
+                continue
             else:
                 ranges[i] = np.mean(ranges[i-1:i+1])
         return ranges
