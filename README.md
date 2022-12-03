@@ -7,6 +7,9 @@ This repository contains the ROS package developed for the research project ‘A
 
 This package was built for ROS Noetic and run in Linux Ubuntu 20.04. 
 
+## Project description
+
+The research project runs an algorithm to make a switching between crop rows in greenhouse based on obstacle avoidance with 2D LiDAR, the algorithm takes LiDAR lectures, filter them to have only the frontal ranges and calculates a free point by adding range vectors considering a number of lectures that have a specific weight depending on what turn will be executed. Once this free point is calculated, it is converted on control references to make the robot to navigate and make a row switching. 
  
 
 ## Software used 
@@ -49,4 +52,28 @@ Run the <lidar_filter.launch> file, this will filter the lidar samples.
 
 Then run <left.py> or <right.py> node, this is the navigation algorithm each of those runs the program that turns to one side, the one on the name. 
 
-## Files descriptions  
+## Folders descriptions  
+
+### Launch 
+
+This folder contains the launch files of the package 
+
+### Scripts 
+
+This folder contains the ROS nodes. 
+
+### Config 
+
+This folder contains the rviz configurations needed as well as the lidar filter configuration. 
+
+### URDF  
+
+This folder contains some changes made to the jackal simulation. 
+
+### Worlds 
+
+This folder contains the gazeebo world used in the simulation. 
+
+## Additional material  
+
+In this drive folder ROS bags from the experiments can be found in:  https://drive.google.com/drive/folders/140ymzCOkjOyiiQXhW9bEzJSy3rdIP7RN?usp=sharing 
