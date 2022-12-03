@@ -1,18 +1,52 @@
 # greenhouse_rotation
-This is a ROS package that contains scripts of research semester
-Note: To work with this package you have to work with Ubuntu 20.04 and ROS Noetic
+# Automatic-row-switching-algorithm-using-2D-Lidar 
 
-To install and run the simulation...
-1. Follow the instruction here (link) to download and install Jackal simulation package
-2. Clone this package in the workspace you download Jackal package
-3. Build the workspace
-4. Go to this package direction
-5. Source ./ setup.bash
-6. Roslaunch greenhouse_rotation empty_world.launch
-7. Open a new terminal
-8. Source ./ setup.bash
-9. Rosrun greenhouse_rotation test.py
+This repository contains the ROS package developed for the research project ‘Automatic row switching algorithm using 2D Lidar’ made by Enrico Mendez and Juan Manuel Torrijos.  
 
-To run algorithm in a real jackal
-1. Connect to jackal via ssh (with its correct credentials)
-2. ROS_MASTER_URI="(Jackal IP)"
+ 
+
+This package was built for ROS Noetic and run in Linux Ubuntu 20.04. 
+
+ 
+
+## Software used 
+
+Python 3 
+
+Gazeebo 
+
+Rviz 
+
+ROS Noetic 
+
+ROS packages used 
+
+Laser_filters : can be found in http://wiki.ros.org/laser_filters 
+
+Rplidar : can be found in http://wiki.ros.org/rplidar 
+
+## Simulation 
+
+The simulation was made with a simulation of a differential drive robot, jackal. Nevertheless, it can be tested with any robot with a LIDAR.  
+
+To simulate Jackal, follow instructions from the manufacturer in: http://www.clearpathrobotics.com/assets/guides/kinetic/jackal/simulation.html  
+
+The Jackal must be equipped with a Lidar. 
+
+To run the simulation: 
+
+Launch the launch file <start_test.launch>  this will open a world in gazebo with walls that will simulate a greenhouse structure, will open a rviz window with the laser scan data and will run the lidar filter node.  
+
+Then run <left.py> or <right.py> node, this is the navigation algorithm each of those runs the program that turns to one side, the one on the name. 
+
+## Algorithm implementation 
+
+To use the algorithm to navigate a Jackal some additional steps are needed. 
+
+Run the <lidar_init.launch> file, this will initialize the Rplidar A3, if another lidar model is being used, it must be initialized. 
+
+Run the <lidar_filter.launch> file, this will filter the lidar samples. 
+
+Then run <left.py> or <right.py> node, this is the navigation algorithm each of those runs the program that turns to one side, the one on the name. 
+
+## Files descriptions  
